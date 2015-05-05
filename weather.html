@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html ng-app="myApp">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Weather app</title>
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css"/>
+    <link rel="stylesheet" href="base.css"/>
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="bower_components/angular/angular.js"></script>
+    <script>
+        //controller definition here
+        angular.module("myApp",[]).controller("MyController",function($scope, $http){
+            $scope.weather = "";
+            $scope.image='';
+            $scope.temperature='';
+            $scope.moreURL ='';
+            $scope.moreURLImg ='';
+            $scope.getKey = function(event){
+                if(event.keyCode === 13){
+                    getWeatherDetails('http://api.openweathermap.org/data/2.5/weather?q='+$scope.city);
+                }
+
+                function getWeatherDetails(link){
+                    $http.get(link).success(function(data){
+                       // console.log(data);
+                        $scope.weather = data;
+                        $scope.temperature = (data.main.temp - 272.15).toFixed(2);
+                        $scope.image = 'http://openweathermap.org/img/w/'+data.weather[0].icon+'.png';
+                        var date = new Date();
+                        $scope.date = date;
+                        $scope.moreURL ='http://api.openweathermap.org/data/2.5/forecast/daily?id='+data.id;
+                        getMore($scope.moreURL);
+                    });
+                }
+
+                function getMore(){
+                    $http.get($scope.moreURL).success(function(moreData){
+                        console.log('found your city mate');
+                        //console.log(moreData);
+                        $scope.week = moreData.list;
+                        $scope.moreURLImg ='http://openweathermap.org/img/w/';
+                        //console.log(moreData.list);
+                    });
+                };
+            };
+        });
+    </script>
+</head>
+<body>
+<div ng-controller="MyController">
+    <input type="text" name="city" placeholder="Enter city here" ng-model="city" ng-keydown="getKey($event)"/>
+    <div class="row">
+        <div class="col-lg-6 results-grid-col">
+        <h4>{{date.toDateString()}}</h4>
+                <div class="col-lg-4">
+                    <img ng-src="{{image}}"/>
+                </div>
+
+                <div class="col-lg-8">
+                    <ul>
+                        <li>City, Country: {{weather.name}} {{weather.sys.country}}</li>
+                        <li>Temperature: {{temperature}} &#8451</li>
+                        <li>Description: {{weather.weather[0].main}}</li>
+                        <li>Wind speed: {{weather.wind.speed}}</li>
+                    </ul>
+                </div>
+
+        </div>
+
+    </div>
+    <ul class="row">
+        <li class="col-lg-4" ng-repeat ="day in week">
+        <div class="row">
+            <div class="col-lg-4">
+                <img ng-src={{moreURLImg+day.weather[0].icon+'.png'}} style="width:100%"/>
+            </div>
+            <div class="col-lg-8">
+                <ul>
+                    <li>Date: {{day.dt}}</li>
+                    <li>Temperature: {{(day.temp.day - 272.15).toFixed(2)}} &#8451</li>
+                    <li>Description: {{day.weather[0].description}}</li>
+                </ul>
+            </div>
+        </div>
+    </li>
+    </ul>
+    </div>
+
+</div>
+</body>
+</html>
